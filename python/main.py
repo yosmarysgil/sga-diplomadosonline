@@ -15,7 +15,7 @@ class Alumno(Persona):
         super().__init__(cedula, nombre, correo)
         self.tipo_programa = tipo_programa
         # Máximo 3 notas por programa
-        self.notas = notas if notas else [0.0, 0.0, 0.0]
+        self.notas = [float(n) for n in notas] if notas else [0.0, 0.0, 0.0]
 
 class Profesor(Persona):
     def __init__(self, cedula, nombre, correo, especialidad, materia):
@@ -33,19 +33,16 @@ class ProgramaAcademico:
 
 class Curso(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
-        # Se aprueba si el promedio de las 3 notas es mayor o igual a 10/20
         promedio = sum(notas) / len(notas) if notas else 0
         return promedio >= 10, promedio
 
 class Diplomado(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
-        # Se aprueba si el promedio de las 3 notas es mayor o igual a 14/20
         promedio = sum(notas) / len(notas) if notas else 0
         return promedio >= 14, promedio
 
 class Bootcamp(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
-        # Ninguna nota individual menor a 14/20
         promedio = sum(notas) / len(notas) if notas else 0
         if not notas:
             return False, promedio
@@ -67,6 +64,7 @@ class SistemaGestionAcademica:
     def cargar_datos(self):
         """Carga los datos desde alumnos.txt y profesores.txt si existen."""
         if os.path.exists("alumnos.txt"):
+            self.alumnos = []
             with open("alumnos.txt", "r", encoding="utf-8") as f:
                 for linea in f:
                     linea = linea.strip()
@@ -78,6 +76,7 @@ class SistemaGestionAcademica:
                             self.alumnos.append(Alumno(cedula, nombre, correo, tipo, notas))
 
         if os.path.exists("profesores.txt"):
+            self.profesores = []
             with open("profesores.txt", "r", encoding="utf-8") as f:
                 for linea in f:
                     linea = linea.strip()
@@ -88,10 +87,11 @@ class SistemaGestionAcademica:
                             self.profesores.append(Profesor(cedula, nombre, correo, esp, mat))
 
     def guardar_alumnos(self):
-        """Guarda todos los alumnos en alumnos.txt."""
+        """Guarda todos los alumnos asegurando el formato exacto con un decimal (.1f)."""
         with open("alumnos.txt", "w", encoding="utf-8") as f:
             for a in self.alumnos:
-                linea = f"{a.cedula},{a.nombre},{a.correo},{a.tipo_programa},{a.notas[0]},{a.notas[1]},{a.notas[2]}\n"
+                # AQUÍ ESTÁ EL CAMBIO CRUCIAL: {a.notas[0]:.1f} fuerza el formato con .0
+                linea = f"{a.cedula},{a.nombre},{a.correo},{a.tipo_programa},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
                 f.write(linea)
 
     def guardar_profesores(self):
@@ -106,33 +106,32 @@ class SistemaGestionAcademica:
         cedula = input("Ingrese Cédula/ID: ").strip()
         nombre = input("Ingrese Nombre Completo: ").strip()
         correo = input("Ingrese Correo Electrónico: ").strip()
-        print("Tipos de Programa disponibles: Curso, Diplomado, Bootcamp")
-        tipo = input("Ingrese Tipo de Programa: ").strip()
+        tipo = input("Ingrese Tipo de Programa: ").strip().lower()
 
         nuevo_alumno = Alumno(cedula, nombre, correo, tipo, [0.0, 0.0, 0.0])
         self.alumnos.append(nuevo_alumno)
         self.guardar_alumnos()
-        print("¡Alumno registrado y guardado en alumnos.txt con éxito!")
+        print("¡Alumno registrado y guardado con éxito!")
 
     def registrar_profesor(self):
         print("\n--- Registrar Profesor ---")
         cedula = input("Ingrese Cédula/ID: ").strip()
         nombre = input("Ingrese Nombre Completo: ").strip()
         correo = input("Ingrese Correo Electrónico: ").strip()
-        especialidad = input("Ingrese Especialidad (ej. Python, Java, C++): ").strip()
+        especialidad = input("Ingrese Especialidad: ").strip()
         materia = input("Ingrese Materia Asignada: ").strip()
 
         nuevo_profesor = Profesor(cedula, nombre, correo, especialidad, materia)
         self.profesores.append(nuevo_profesor)
         self.guardar_profesores()
-        print("¡Profesor registrado y guardado en profesores.txt con éxito!")
+        print("¡Profesor registrado con éxito!")
 
     def registrar_notas(self):
         print("\n--- Registrar Notas a un Alumno ---")
         cedula = input("Ingrese la Cédula del alumno: ").strip()
         alumno_encontrado = None
         for a in self.alumnos:
-            if a.cedula == cedula:
+            if a.cedula.lower() == cedula.lower():
                 alumno_encontrado = a
                 break
 
@@ -169,7 +168,7 @@ class SistemaGestionAcademica:
 
         ultimo_cambio = self.pila_historial_notas.pop()
         alumno = ultimo_cambio["alumno"]
-        alumno.notas = ultimo_cambio["notas_anteriores"]
+        alumno.notas = list(ultimo_cambio["notas_anteriores"])
         self.guardar_alumnos()
         print(f"Se han revertido las notas del alumno {alumno.nombre} a su estado anterior: {alumno.notas}")
 
@@ -195,7 +194,6 @@ class SistemaGestionAcademica:
                         "promedio": promedio
                     })
 
-        # Exportar a certificados_pendientes.txt usando lógica FIFO
         with open("certificados_pendientes.txt", "w", encoding="utf-8") as f:
             f.write("=========================================\n")
             f.write("REPORTE DE CERTIFICADOS PENDIENTES\n")
@@ -204,7 +202,7 @@ class SistemaGestionAcademica:
 
             contador = 1
             while cola_aprobados:
-                item = cola_aprobados.popleft() # FIFO (First In, First Out)
+                item = cola_aprobados.popleft()
                 _al = item["alumno"]
                 _prom = item["promedio"]
                 
@@ -213,15 +211,15 @@ class SistemaGestionAcademica:
                     estatus_txt = "APROBADO (Cumple regla de ninguna nota < 14)"
 
                 f.write(f"{contador}. [{_al.cedula}] {_al.nombre}\n")
-                f.write(f"   - Programa: {_al.tipo_programa}\n")
-                f.write(f"   - Promedio Final: {_prom:.1f}\n")
-                f.write(f"   - Estatus: {estatus_txt}\n\n")
+                f.write(f"    - Programa: {_al.tipo_programa}\n")
+                f.write(f"    - Promedio Final: {_prom:.1f}\n")
+                f.write(f"    - Estatus: {estatus_txt}\n\n")
                 contador += 1
 
             f.write("=========================================\n")
             f.write("* Fin del reporte - Generado por SGA-DO *\n")
 
-        print("¡Cola de certificados generada con éxito en 'certificados_pendientes.txt'!")
+        print("¡Cola de certificados generada con éxito!")
 
     def mostrar_reporte_general(self):
         print("\n" + "="*40)
@@ -229,14 +227,10 @@ class SistemaGestionAcademica:
         print("="*40)
         
         print(f"\n--- PROFESORES ({len(self.profesores)}) ---")
-        if not self.profesores:
-            print("No hay profesores registrados.")
         for p in self.profesores:
             print(f"ID: {p.cedula} | Nombre: {p.nombre} | Correo: {p.correo} | Esp: {p.especialidad} | Mat: {p.materia}")
 
         print(f"\n--- ALUMNOS ({len(self.alumnos)}) ---")
-        if not self.alumnos:
-            print("No hay alumnos registrados.")
         for a in self.alumnos:
             print(f"ID: {a.cedula} | Nombre: {a.nombre} | Programa: {a.tipo_programa} | Notas: {a.notas}")
         print("="*40)
@@ -244,7 +238,7 @@ class SistemaGestionAcademica:
     def ejecutar(self):
         while True:
             print("\n==================================================")
-            print("      SGA-DO: SISTEMA DIPLOMADOSONLINE")
+            print("    SGA-DO: SISTEMA DIPLOMADOSONLINE")
             print("==================================================")
             print("1. Registrar Alumno")
             print("2. Registrar Profesor")
@@ -278,3 +272,4 @@ class SistemaGestionAcademica:
 if __name__ == "__main__":
     sistema = SistemaGestionAcademica()
     sistema.ejecutar()
+         

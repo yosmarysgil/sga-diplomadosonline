@@ -1,3 +1,4 @@
+
 import os
 from collections import deque
 
@@ -90,7 +91,6 @@ class SistemaGestionAcademica:
         """Guarda todos los alumnos asegurando el formato exacto con un decimal (.1f)."""
         with open("alumnos.txt", "w", encoding="utf-8") as f:
             for a in self.alumnos:
-                # AQUÍ ESTÁ EL CAMBIO CRUCIAL: {a.notas[0]:.1f} fuerza el formato con .0
                 linea = f"{a.cedula},{a.nombre},{a.correo},{a.tipo_programa},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
                 f.write(linea)
 
@@ -150,7 +150,7 @@ class SistemaGestionAcademica:
             print("Error: Debe ingresar valores numéricos válidos.")
             return
 
-        # Guardar estado anterior en la pila antes de modificar (para Deshacer - LIFO)
+        # GUARDAR ESTADO ANTERIOR EN LA PILA ANTES DE MODIFICAR (LIFO)
         self.pila_historial_notas.append({
             "alumno": alumno_encontrado,
             "notas_anteriores": list(alumno_encontrado.notas)
@@ -168,6 +168,8 @@ class SistemaGestionAcademica:
 
         ultimo_cambio = self.pila_historial_notas.pop()
         alumno = ultimo_cambio["alumno"]
+        
+        # Restaurar notas anteriores y actualizar el archivo de inmediato
         alumno.notas = list(ultimo_cambio["notas_anteriores"])
         self.guardar_alumnos()
         print(f"Se han revertido las notas del alumno {alumno.nombre} a su estado anterior: {alumno.notas}")

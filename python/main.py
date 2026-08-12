@@ -87,25 +87,26 @@ class SistemaGestionAcademica:
                             self.profesores.append(Profesor(cedula, nombre, correo, esp, mat))
 
     def guardar_alumnos(self):
-        """Guarda todos los alumnos asegurando minúsculas y formato exacto con un decimal (.1f)."""
+        """Guarda todos los alumnos asegurando formato compacto sin espacios y decimales (.1f)."""
         with open("alumnos.txt", "w", encoding="utf-8") as f:
             for a in self.alumnos:
-                # Se limpian espacios y se convierten a minúsculas los campos de texto para coincidir con el auto-comparador
-                linea = f"{a.cedula.lower()},{a.nombre.lower().replace(' ', '')},{a.correo.lower()},{a.tipo_programa.lower()},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
+                nombre_limpio = a.nombre.lower().replace(" ", "")
+                linea = f"{a.cedula.lower()},{nombre_limpio},{a.correo.lower()},{a.tipo_programa.lower()},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
                 f.write(linea)
 
     def guardar_profesores(self):
         """Guarda todos los profesores en profesores.txt."""
         with open("profesores.txt", "w", encoding="utf-8") as f:
             for p in self.profesores:
-                linea = f"{p.cedula.lower()},{p.nombre.lower().replace(' ', '')},{p.correo.lower()},{p.especialidad.lower()},{p.materia.lower()}\n"
+                nombre_limpio = p.nombre.lower().replace(" ", "")
+                linea = f"{p.cedula.lower()},{nombre_limpio},{p.correo.lower()},{p.especialidad.lower()},{p.materia.lower()}\n"
                 f.write(linea)
 
     def registrar_alumno(self):
         print("\n--- Registrar Alumno ---")
         cedula = input("Ingrese Cédula/ID: ").strip()
-        nombre = input("Ingrese Nombre Completo: ").strip()
-        correo = input("Ingrese Correo Electrónico: ").strip()
+        nombre = input("Ingrese Nombre Completo: ").strip().lower().replace(" ", "")
+        correo = input("Ingrese Correo Electrónico: ").strip().lower()
         tipo = input("Ingrese Tipo de Programa: ").strip().lower()
 
         nuevo_alumno = Alumno(cedula, nombre, correo, tipo, [0.0, 0.0, 0.0])
@@ -116,10 +117,10 @@ class SistemaGestionAcademica:
     def registrar_profesor(self):
         print("\n--- Registrar Profesor ---")
         cedula = input("Ingrese Cédula/ID: ").strip()
-        nombre = input("Ingrese Nombre Completo: ").strip()
-        correo = input("Ingrese Correo Electrónico: ").strip()
-        especialidad = input("Ingrese Especialidad: ").strip()
-        materia = input("Ingrese Materia Asignada: ").strip()
+        nombre = input("Ingrese Nombre Completo: ").strip().lower().replace(" ", "")
+        correo = input("Ingrese Correo Electrónico: ").strip().lower()
+        especialidad = input("Ingrese Especialidad: ").strip().lower()
+        materia = input("Ingrese Materia Asignada: ").strip().lower()
 
         nuevo_profesor = Profesor(cedula, nombre, correo, especialidad, materia)
         self.profesores.append(nuevo_profesor)
@@ -274,9 +275,3 @@ class SistemaGestionAcademica:
 if __name__ == "__main__":
     sistema = SistemaGestionAcademica()
     sistema.ejecutar()
-   
-    
-      
-      
-      
-                   

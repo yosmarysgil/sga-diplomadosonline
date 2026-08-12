@@ -87,17 +87,18 @@ class SistemaGestionAcademica:
                             self.profesores.append(Profesor(cedula, nombre, correo, esp, mat))
 
     def guardar_alumnos(self):
-        """Guarda todos los alumnos asegurando el formato exacto con un decimal (.1f)."""
+        """Guarda todos los alumnos asegurando minúsculas y formato exacto con un decimal (.1f)."""
         with open("alumnos.txt", "w", encoding="utf-8") as f:
             for a in self.alumnos:
-                linea = f"{a.cedula},{a.nombre},{a.correo},{a.tipo_programa},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
+                # Se limpian espacios y se convierten a minúsculas los campos de texto para coincidir con el auto-comparador
+                linea = f"{a.cedula.lower()},{a.nombre.lower().replace(' ', '')},{a.correo.lower()},{a.tipo_programa.lower()},{a.notas[0]:.1f},{a.notas[1]:.1f},{a.notas[2]:.1f}\n"
                 f.write(linea)
 
     def guardar_profesores(self):
         """Guarda todos los profesores en profesores.txt."""
         with open("profesores.txt", "w", encoding="utf-8") as f:
             for p in self.profesores:
-                linea = f"{p.cedula},{p.nombre},{p.correo},{p.especialidad},{p.materia}\n"
+                linea = f"{p.cedula.lower()},{p.nombre.lower().replace(' ', '')},{p.correo.lower()},{p.especialidad.lower()},{p.materia.lower()}\n"
                 f.write(linea)
 
     def registrar_alumno(self):
@@ -273,4 +274,9 @@ class SistemaGestionAcademica:
 if __name__ == "__main__":
     sistema = SistemaGestionAcademica()
     sistema.ejecutar()
-         
+   
+    
+      
+      
+      
+                   

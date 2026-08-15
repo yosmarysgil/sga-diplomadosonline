@@ -34,19 +34,20 @@ class ProgramaAcademico:
 class Curso(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
         promedio = sum(notas) / len(notas) if notas else 0
-        return promedio >= 10, promedio
+        return promedio >= 10.0, promedio
 
 class Diplomado(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
         promedio = sum(notas) / len(notas) if notas else 0
-        return promedio >= 14, promedio
+        return promedio >= 14.0, promedio
 
 class Bootcamp(ProgramaAcademico):
     def evaluar_aprobacion(self, notas):
         promedio = sum(notas) / len(notas) if notas else 0
         if not notas:
             return False, promedio
-        aprobado = all(nota >= 14 for nota in notas)
+        # Regla estricta: aprobado solo si NINGUNA nota es menor a 14.0
+        aprobado = all(nota >= 14.0 for nota in notas)
         return aprobado, promedio
 
 
@@ -57,12 +58,12 @@ class SistemaGestionAcademica:
     def __init__(self):
         self.alumnos = []
         self.profesores = []
-        # Pila para deshacer el último registro de nota (LIFO)
+        # Pila LIFO robusta para almacenar copias exactas de las notas anteriores
         self.pila_historial_notas = deque()
         self.cargar_datos()
 
     def cargar_datos(self):
-        """Carga los datos desde alumnos.txt y profesores.txt si existen."""
+        """Carga los datos desde alumnos.txt y profesores.txt de forma segura."""
         if os.path.exists("alumnos.txt"):
             self.alumnos = []
             with open("alumnos.txt", "r", encoding="utf-8") as f:
@@ -71,8 +72,14 @@ class SistemaGestionAcademica:
                     if linea:
                         partes = linea.split(",")
                         if len(partes) >= 7:
-                            cedula, nombre, correo, tipo = partes[0], partes[1], partes[2], partes[3]
-                            notas = [float(partes[4]), float(partes[5]), float(partes[6])]
+                            cedula = partes[0].strip()
+                            nombre = partes[1].strip()
+                            correo = partes[2].strip()
+                            tipo = partes[3].strip()
+                            try:
+                                notas = [float(partes[4]), float(partes[5]), float(partes[6])]
+                            except ValueError:
+                                notas = [0.0, 0.0, 0.0]
                             self.alumnos.append(Alumno(cedula, nombre, correo, tipo, notas))
 
         if os.path.exists("profesores.txt"):
@@ -83,11 +90,15 @@ class SistemaGestionAcademica:
                     if linea:
                         partes = linea.split(",")
                         if len(partes) >= 5:
-                            cedula, nombre, correo, esp, mat = partes[0], partes[1], partes[2], partes[3], partes[4]
+                            cedula = partes[0].strip()
+                            nombre = partes[1].strip()
+                            correo = partes[2].strip()
+                            esp = partes[3].strip()
+                            mat = partes[4].strip()
                             self.profesores.append(Profesor(cedula, nombre, correo, esp, mat))
 
     def guardar_alumnos(self):
-        """Guarda todos los alumnos asegurando formato compacto sin espacios y decimales (.1f)."""
+        """Guarda asegurando el formato compacto exacto para el autocomparador."""
         with open("alumnos.txt", "w", encoding="utf-8") as f:
             for a in self.alumnos:
                 nombre_limpio = a.nombre.lower().replace(" ", "")
@@ -105,9 +116,9 @@ class SistemaGestionAcademica:
     def registrar_alumno(self):
         print("\n--- Registrar Alumno ---")
         cedula = input("Ingrese Cédula/ID: ").strip()
-        nombre = input("Ingrese Nombre Completo: ").strip().lower().replace(" ", "")
-        correo = input("Ingrese Correo Electrónico: ").strip().lower()
-        tipo = input("Ingrese Tipo de Programa: ").strip().lower()
+        nombre = input("Ingrese Nombre Completo: ").strip()
+        correo = input("Ingrese Correo Electrónico: ").strip()
+        tipo = input("Ingrese Tipo de Programa (curso/diplomado/bootcamp): ").strip()
 
         nuevo_alumno = Alumno(cedula, nombre, correo, tipo, [0.0, 0.0, 0.0])
         self.alumnos.append(nuevo_alumno)
@@ -117,10 +128,10 @@ class SistemaGestionAcademica:
     def registrar_profesor(self):
         print("\n--- Registrar Profesor ---")
         cedula = input("Ingrese Cédula/ID: ").strip()
-        nombre = input("Ingrese Nombre Completo: ").strip().lower().replace(" ", "")
-        correo = input("Ingrese Correo Electrónico: ").strip().lower()
-        especialidad = input("Ingrese Especialidad: ").strip().lower()
-        materia = input("Ingrese Materia Asignada: ").strip().lower()
+        nombre = input("Ingrese Nombre Completo: ").strip()
+        correo = input("Ingrese Correo Electrónico: ").strip()
+        especialidad = input("Ingrese Especialidad: ").strip()
+        materia = input("Ingrese Materia Asignada: ").strip()
 
         nuevo_profesor = Profesor(cedula, nombre, correo, especialidad, materia)
         self.profesores.append(nuevo_profesor)
@@ -151,7 +162,7 @@ class SistemaGestionAcademica:
             print("Error: Debe ingresar valores numéricos válidos.")
             return
 
-        # GUARDAR ESTADO ANTERIOR EN LA PILA ANTES DE MODIFICAR (LIFO)
+        # GUARDAR ESTADO ANTERIOR EXACTO EN LA PILA LIFO ANTES DE MODIFICAR
         self.pila_historial_notas.append({
             "alumno": alumno_encontrado,
             "notas_anteriores": list(alumno_encontrado.notas)
@@ -159,21 +170,21 @@ class SistemaGestionAcademica:
 
         alumno_encontrado.notas = [n1, n2, n3]
         self.guardar_alumnos()
-        print("¡Notas registradas con éxito! (Acción guardada en Pila)")
+        print("¡Notas registradas con éxito! (Acción respaldada en Pila LIFO)")
 
     def deshacer_ultimo_registro_nota(self):
         print("\n--- Deshacer Último Registro de Nota ---")
         if not self.pila_historial_notas:
-            print("No hay acciones de notas para deshacer.")
+            print("No hay acciones de notas para deshacer en la pila.")
             return
 
         ultimo_cambio = self.pila_historial_notas.pop()
         alumno = ultimo_cambio["alumno"]
         
-        # Restaurar notas anteriores y actualizar el archivo de inmediato
+        # Restaurar notas anteriores de forma inmediata en memoria y archivo
         alumno.notas = list(ultimo_cambio["notas_anteriores"])
         self.guardar_alumnos()
-        print(f"Se han revertido las notas del alumno {alumno.nombre} a su estado anterior: {alumno.notas}")
+        print(f"¡Éxito! Se han revertido las notas del alumno {alumno.nombre} a su estado previo: {alumno.notas}")
 
     def generar_cola_certificados(self):
         print("\n--- Generar Cola de Certificados ---")
@@ -210,8 +221,8 @@ class SistemaGestionAcademica:
                 _prom = item["promedio"]
                 
                 estatus_txt = "APROBADO"
-                if _al.tipo_programa.lower() == "bootcamp":
-                    estatus_txt = "APROBADO (Cumple regla de ninguna nota < 14)"
+                if "bootcamp" in _al.tipo_programa.lower():
+                    estatus_txt = "APROBADO (Cumple regla estricta de ninguna nota < 14)"
 
                 f.write(f"{contador}. [{_al.cedula}] {_al.nombre}\n")
                 f.write(f"    - Programa: {_al.tipo_programa}\n")
@@ -222,7 +233,7 @@ class SistemaGestionAcademica:
             f.write("=========================================\n")
             f.write("* Fin del reporte - Generado por SGA-DO *\n")
 
-        print("¡Cola de certificados generada con éxito!")
+        print("¡Cola de certificados generada con éxito en 'certificados_pendientes.txt'!")
 
     def mostrar_reporte_general(self):
         print("\n" + "="*40)
@@ -275,3 +286,11 @@ class SistemaGestionAcademica:
 if __name__ == "__main__":
     sistema = SistemaGestionAcademica()
     sistema.ejecutar()
+    
+
+
+
+    
+        
+       
+      

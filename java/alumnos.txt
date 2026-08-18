@@ -1,0 +1,4 @@
+v-101,anasilva,ana@email.com,curso,10.0,10.0,10.0
+v-202,carlospérez,carlos@email.com,diplomado,14.0,14.0,13.0
+v-303,maríagómez,maria@email.com,bootcamp,20.0,20.0,13.0
+v-404,luisrojas,luis@email.com,bootcamp,14.0,15.0,14.0
